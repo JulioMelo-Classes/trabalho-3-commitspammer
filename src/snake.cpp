@@ -1,4 +1,5 @@
-#include <iostream>
+#include <vector>
+#include <string>
 #include "snake.h"
 
 using namespace std;
@@ -8,6 +9,8 @@ Snake::Snake(vector<string> layout)
 	this->facing = NORTH;
 	this->lifes = 5;
 	this->food_eaten = 0;
+	this->steps = 0;
+	this->score = 0;
 
 	layout.erase(layout.begin());
 	for (unsigned long int i = 0; i < layout.size(); i++) {
@@ -75,6 +78,16 @@ char Snake::get_head_icon() const
 	return 'x';
 }
 
+int Snake::get_steps() const
+{
+	return this->steps;
+}
+
+int Snake::get_score() const
+{
+	return this->score;
+}
+
 bool Snake::is_head(int y, int x) const
 {
 	if (this->head.first == y && this->head.second == x)
@@ -91,46 +104,54 @@ bool Snake::is_tail(int y, int x) const
 	return false;
 }
 
-void Snake::move_tail(bool eat)
+void Snake::increase_score()
 {
-	this->tail.insert(this->tail.begin(), this->head);
-	if (!eat)
-		this->tail.pop_back();
+	if (this->steps < 50)
+		this->score += (100-(this->steps*2))/10;
+	else
+		this->score += 1;
 }
 
-void Snake::move(Snake::Direction direction, string mode, bool eat)
+void Snake::grow()
 {
-	if (mode == "snake")
-		move_tail(eat);
+	if (this->tail.empty())
+		this->tail.push_back(this->head);
+	else
+		this->tail.push_back(this->tail.back());
+}
 
+void Snake::move(Snake::Direction direction, bool eat)
+{
+	this->steps++;
+
+	this->tail.insert(this->tail.begin(), this->head);
+	this->tail.pop_back();
+
+	if (direction == get_opposite_facing())
+		exit(1);
 	switch (direction) {
 	case NORTH:
-		if (this->facing == SOUTH)
-			return;
 		this->head.first--;
 		this->facing = NORTH;
 		break;
 	case SOUTH:
-		if (this->facing == NORTH)
-			return;
 		this->head.first++;
 		this->facing = SOUTH;
 		break;
 	case WEST:
-		if (this->facing == EAST)
-			return;
 		this->head.second--;
 		this->facing = WEST;
 		break;
 	case EAST:
-		if (this->facing == WEST)
-			return;
 		this->head.second++;
 		this->facing = EAST;
 		break;
 	}
-	if (eat)
+
+	if (eat) {
+		this->steps = 0;
 		this->food_eaten++;
+	}
 }
 
 void Snake::respawn()
@@ -140,4 +161,5 @@ void Snake::respawn()
 	this->head.first = this->spawn.first;
 	this->head.second = this->spawn.second;
 	this->tail.clear();
+	this->steps = 0;
 }
